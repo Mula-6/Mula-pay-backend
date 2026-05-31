@@ -6,6 +6,8 @@ load_dotenv()
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    SK: str
+    ALGO: str
     
     
     
