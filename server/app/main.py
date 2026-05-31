@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.core import get_logger
 from contextlib import asynccontextmanager
 from app.infra.database import db_session_manager
+from .api import v1
 
 logger = get_logger(__name__)
 
@@ -15,3 +16,4 @@ async def lifespan(app):
 
 app = FastAPI(title="MulaPay-API", lifespan=lifespan)
 
+app.include_router(v1)
