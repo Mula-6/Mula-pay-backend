@@ -59,3 +59,14 @@ class RedisService:
         except Exception as e:
             logger.error(f"error setting redis due to -> {e}")
             raise
+        
+    
+    async def delete(self, key: str):
+        try:
+            await self.check_redis_init()
+            await self.re.delete(key)
+            return True
+
+        except Exception as e:
+            logger.error(f"error deleting from  redis due to -> {e}")
+            raise

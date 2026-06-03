@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from ..schemas import LoginSchemas, RegistrationSchema
 from ..services import AuthService
 from app.shared.schemas import CustomResponseSchemas
 from fastapi import Depends
+from typing import Annotated
 from app.shared.di import db_injection
 from app.shared.di import redis_injection
 
@@ -21,18 +22,21 @@ auth_controller = APIRouter(
 )
 
 def get_auth_service(
-    db=Depends(db_injection),
-    redis=Depends(redis_injection)
+    db: db_injection,
+    redis: redis_injection
 ):
-    return AuthService(db=db, redis=redis)
-
+    return AuthService(session=db, redis=redis)
 
 @auth_controller.post("/login")
 async def login(payload: LoginSchemas):
     pass
 
+@auth_controller.post("/register")
+async def register(
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    payload: RegistrationSchema,
+    task: BackgroundTasks
+):
+    result = await auth_service.register(payload, task)
 
-@auth_controller.post("/register",response_model=CustomResponseSchemas)
-async def register(payload: RegistrationSchema, auth_service: AuthService = Depends(get_auth_service)):
-    return await auth_service.register(payload)
-    
+    return result

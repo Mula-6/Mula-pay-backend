@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     REDIS_URL: str
     
     
+    # Email sending keys
+    MAIL_JET_API:str
+    MAIL_JET_SK:str
+    APP_EMAIL_SENDER:str
+    
+    
     
 
 

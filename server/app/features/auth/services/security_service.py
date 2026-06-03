@@ -1,9 +1,15 @@
+from typing import Optional
+
 import jwt
 from app.core.config import settings
 from passlib.context import CryptContext
 from ..schemas import TokenSchemas
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta
+from app.shared.constants import OtpTokenType
+import secrets
+from ..schemas import OtpTokenSchemas
 
 
 
@@ -39,4 +45,10 @@ class SecurityService:
         }
         return jwt.encode(payload, self._sk, algorithm=self._algo)
 
-        
+    
+
+
+    def generate_otp(self, length: int = 6, otp_type: Optional[OtpTokenType] =OtpTokenType.VERIFICATION):
+        otp = ''.join(str(secrets.randbelow(10)) for _ in range(length))
+        expires_at = datetime.utcnow() + timedelta(minutes=5)
+        return OtpTokenSchemas(otp=otp, expire_at=expires_at, otp_type=otp_type)

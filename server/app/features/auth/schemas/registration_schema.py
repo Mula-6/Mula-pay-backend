@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationError
+from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationError, ConfigDict
 from typing import Optional, Pattern
 import re
 from datetime import datetime
@@ -7,7 +7,8 @@ class RegistrationSchema(BaseModel):
     firstname: str = Field(..., min_length=2, max_length=50, description="First name")
     lastname: str = Field(..., min_length=2, max_length=50, description="Last name")
     email: EmailStr = Field(..., description="Valid email address")
-    password: str = Field(..., min_length=8, max_length=16, description="Password")
+    password: str = Field(..., min_length=8, max_length=200, description="Password")
+    model_config= ConfigDict(from_attributes=True)
     
     @field_validator('firstname')
     def validate_firstname(cls, v):
@@ -85,3 +86,11 @@ class RegistrationSchema(BaseModel):
             raise ValueError('Disposable email addresses are not allowed')
         
         return v
+
+
+
+
+class StageRegistration(BaseModel):
+    reg_dt: RegistrationSchema
+    is_email_verified:Optional[bool] = False
+    model_config= ConfigDict(from_attributes=True)
