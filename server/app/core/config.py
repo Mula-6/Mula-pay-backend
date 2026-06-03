@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     SK: str
     ALGO: str
     
+    REDIS_URL: str
+    
     
     
 

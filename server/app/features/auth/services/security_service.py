@@ -1,5 +1,5 @@
 import jwt
-from core.config import settings
+from app.core.config import settings
 from passlib.context import CryptContext
 from ..schemas import TokenSchemas
 from datetime import timedelta, datetime
