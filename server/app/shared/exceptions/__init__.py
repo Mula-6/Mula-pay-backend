@@ -1,3 +1,6 @@
 from .user_already_exists import UserAlreadyExistsException
 from .email_verification_pending import EmailVerificationPendingException
 from .otp_exceptions import OtpAlreadySentException, OtpNotFoundException, OtpTypeMismatchException, InvalidOtpException
+from .invalid_credential_exception import InvalidCredentialsException
+from .user_not_found_exception import UserNotFoundException
+from .invalid_payload_exception import InvalidPayloadException

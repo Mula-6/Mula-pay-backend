@@ -1,9 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.constants import RegStagedState, OtpTokenType
+from ..schemas import LoginSchemas
 from ..schemas import RegistrationSchema, StageRegistration
 from ..repository import AuthRepo
-from app.shared.exceptions import UserAlreadyExistsException, EmailVerificationPendingException, OtpAlreadySentException, OtpNotFoundException, InvalidOtpException
+from app.shared.exceptions import (UserAlreadyExistsException, EmailVerificationPendingException, OtpAlreadySentException, 
+                                   OtpNotFoundException, InvalidOtpException, UserNotFoundException, 
+                                   InvalidCredentialsException,InvalidPayloadException )
 from app.shared.services import RedisService, Redis
 from app.features.user.repository import UserRepo
 from .security_service import SecurityService
@@ -23,6 +26,23 @@ class AuthService:
         self.security = SecurityService()
         self.email_service = EmailService()
         
+            
+    async def login(self, payload: LoginSchemas):
+        res = await self.user_repo.check_user_exist_in_db(payload.email)
+    
+        if res is None:
+            raise UserNotFoundException(payload.email)
+    
+        if not self.security.verify_hash_password(payload.password, res.password):
+            raise InvalidCredentialsException()
+    
+        return CustomResponseSchemas.success_response(
+            data=None,
+            message="Login was successful"
+        )
+    
+    
+        
         
     async def user_email_verified(self, email: str):
         user = await self.repo.check_user_exist_in_stage(email)
@@ -31,8 +51,6 @@ class AuthService:
             await self.user_repo.create_user(user.reg_dt)
             return CustomResponseSchemas.success_response(data=None, message="Your email have been verified")
             
-          
-        
     
     async def register(self, schemas: RegistrationSchema, background_task: BackgroundTasks):
         check_user = await self.user_repo.check_user_exist_in_db(schemas.email)

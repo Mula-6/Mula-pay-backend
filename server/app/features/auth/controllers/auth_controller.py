@@ -7,6 +7,8 @@ from typing import Annotated
 from app.shared.di import db_injection
 from ..schemas import OtpResponseSchemas
 from app.shared.di import redis_injection
+from fastapi.security import OAuth2PasswordRequestForm
+from ..services import SecurityService
 
 
 
@@ -30,8 +32,13 @@ def get_auth_service(
     return AuthService(session=db, redis=redis)
 
 @auth_controller.post("/login")
-async def login(payload: LoginSchemas):
-    pass
+async def login(
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    payload: LoginSchemas
+):
+    return await auth_service.login(payload)
+
+
 
 @auth_controller.post("/register")
 async def register(
