@@ -1,11 +1,13 @@
 from fastapi import APIRouter, BackgroundTasks
-from ..schemas import LoginSchemas, RegistrationSchema
+from ..schemas import LoginSchemas, RegistrationSchema, OtpRequestSchemas
 from ..services import AuthService
 from app.shared.schemas import CustomResponseSchemas
 from fastapi import Depends
 from typing import Annotated
 from app.shared.di import db_injection
+from ..schemas import OtpResponseSchemas
 from app.shared.di import redis_injection
+
 
 
 auth_controller = APIRouter(
@@ -40,3 +42,21 @@ async def register(
     result = await auth_service.register(payload, task)
 
     return result
+
+
+@auth_controller.post("/verify-otp")
+async def verifiy_otp(
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    schemas: OtpResponseSchemas  
+    ):
+    return await auth_service.verify_otp_code(otp=schemas.otp, email=schemas.email,type=schemas.type)
+
+
+@auth_controller.post("/request-otp")
+async def request_otp(
+    schemas: OtpRequestSchemas,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    background_task: BackgroundTasks
+):
+    return await auth_service.request_otp_token(schemas.email, background_task=background_task, type=schemas.type)
+    

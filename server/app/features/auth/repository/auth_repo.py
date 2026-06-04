@@ -2,13 +2,15 @@ from datetime import datetime, timedelta
 
 from redis.asyncio import Redis
 from app.shared.services import RedisService
+from app.shared.constants import OtpTokenType
 from ..schemas import StageRegistration
 import json
-from app.shared.constants.keys import get_stage_reg_key
+from app.shared.constants.keys import get_stage_reg_key, get_token_key
 from app.core.logger import get_logger
 from app.shared.constants import RegStagedState
 from ..schemas import OtpTokenSchemas
 from app.shared.handler import CustomDataEncoder
+
 
 
 
@@ -71,5 +73,14 @@ class AuthRepo:
     async def store_temp_otp(self, data:OtpTokenSchemas, key: str):
         await self.redis.set(key=key, value=json.dumps(data.model_dump(), cls=CustomDataEncoder),  exp= data.expire_at - datetime.utcnow())
         return True
+    
+    
+    async def get_temp_otp(self, email: str, type: OtpTokenType):
+        key = get_token_key(email, type)
+        res = await self.redis.get(key)
+        if res is not None:
+            clean_dt = OtpTokenSchemas.model_validate(json.loads(res))
+            return clean_dt
+        return None
 
         
