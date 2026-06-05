@@ -34,12 +34,12 @@ class SecurityService:
         return self.pwd_contxt.verify(password, hash=hash_pass)
     
     
-    def generate_token(self, token_data: TokenSchemas) -> str:
+    def generate_access_token(self, token_data: TokenSchemas) -> str:
         payload = {
             "id": str(token_data.id),
             "email": token_data.useremail,
-            "token_type": token_data.token_type,
-            "role": token_data.role,
+            "token_type": token_data.token_type.value,
+            "role": token_data.role.value,
             "iat": datetime.utcnow(),
             "exp": datetime.utcnow() + (token_data.exp or timedelta(minutes=30))
         }
@@ -52,3 +52,7 @@ class SecurityService:
         otp = ''.join(str(secrets.randbelow(10)) for _ in range(length))
         expires_at = datetime.utcnow() + timedelta(minutes=5)
         return OtpTokenSchemas(otp=otp, expire_at=expires_at, otp_type=otp_type)
+    
+    
+    def generate_opaque_refresh_token(self):
+        return secrets.token_urlsafe(64)

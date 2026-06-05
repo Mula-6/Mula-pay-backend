@@ -7,3 +7,7 @@ def get_stage_reg_key(email:str):
 
 def get_token_key(email: str, type: OtpTokenType):
     return f"{type.value}-otp:{email}"
+
+
+def get_session_key(token: str):
+    return f"SESSION:{token}"

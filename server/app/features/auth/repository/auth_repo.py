@@ -5,10 +5,13 @@ from app.shared.services import RedisService
 from app.shared.constants import OtpTokenType
 from ..schemas import StageRegistration
 import json
-from app.shared.constants.keys import get_stage_reg_key, get_token_key
+from app.shared.constants.keys import get_stage_reg_key, get_token_key, get_session_key
 from app.core.logger import get_logger
 from app.shared.constants import RegStagedState
 from ..schemas import OtpTokenSchemas
+from app.shared.handler import CustomDataEncoder
+from app.features.user.repository import UserRepo
+from app.features.user.schemas import UserBaseSchema
 from app.shared.handler import CustomDataEncoder
 
 
@@ -19,6 +22,7 @@ logger = get_logger(__name__)
 class AuthRepo:
     def __init__(self, redis: Redis):
         self.redis = RedisService(redis)
+        
     
     
 
@@ -82,5 +86,28 @@ class AuthRepo:
             clean_dt = OtpTokenSchemas.model_validate(json.loads(res))
             return clean_dt
         return None
+    
+    async def check_session_exist(self, token: str):
+        res = await self.redis.get(get_session_key(token))
+        if res is None:
+            return None
+        clean_dt = UserBaseSchema.model_validate(json.load(res))
+        return clean_dt
+    
+        
+    async def create_user_session(self, email: str, user_repo:UserRepo, token: str, exp: timedelta):
+        
+        if await self.check_session_exist(token) is None:
+            return False
+        
+        res = await user_repo.check_user_exist_in_db(email)
+        if res is None:
+            return False
+        user = UserBaseSchema(email=res.email, firstname=res.firstname, lastname=res.lastname, role=res.role, id=str(res.id))
+        await self.redis.set(key=token, value=json.dumps(user.model_dump(), cls=CustomDataEncoder), exp=exp)
+        return token
+        
+        
+        
 
         

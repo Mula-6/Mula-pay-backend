@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.constants import RegStagedState, OtpTokenType
+from app.features.auth.schemas import TokenSchemas
+from app.shared.constants import TokenType
 from ..schemas import LoginSchemas
 from ..schemas import RegistrationSchema, StageRegistration
 from ..repository import AuthRepo
@@ -35,9 +39,24 @@ class AuthService:
     
         if not self.security.verify_hash_password(payload.password, res.password):
             raise InvalidCredentialsException()
-    
+        
+        exp_time = timedelta(minutes=40)
+        opaque_token = self.security.generate_opaque_refresh_token()
+        access_token = self.security.generate_access_token(token_data=TokenSchemas(
+            exp=exp_time, 
+            id=res.id,
+            useremail=res.email,
+            role=res.role,
+            token_type=TokenType.ACCESS,
+        ))
+        
+        await self.repo.create_user_session(email=res.email, user_repo=self.user_repo, token= opaque_token,exp=timedelta(days=7))
         return CustomResponseSchemas.success_response(
-            data=None,
+            data={
+                "access_token": access_token,
+                "opaque_token": opaque_token,
+                "token_type": "Bearer token"
+                },
             message="Login was successful"
         )
     
