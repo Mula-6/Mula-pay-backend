@@ -28,3 +28,5 @@ class OtpRequestSchemas(BaseModel):
     email: EmailStr
     type: OtpTokenType = OtpTokenType.VERIFICATION
     model_config=ConfigDict(from_attributes=True)
+    
+    

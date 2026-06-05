@@ -1,10 +1,13 @@
 from datetime import timedelta
+import json
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.shared.constants import RegStagedState, OtpTokenType
 from app.features.auth.schemas import TokenSchemas
 from app.shared.constants import TokenType
+from app.features.user.schemas import UserBaseSchema
+from app.shared.exceptions import NoSessionException
 from ..schemas import LoginSchemas
 from ..schemas import RegistrationSchema, StageRegistration
 from ..repository import AuthRepo
@@ -40,10 +43,10 @@ class AuthService:
         if not self.security.verify_hash_password(payload.password, res.password):
             raise InvalidCredentialsException()
         
-        exp_time = timedelta(minutes=40)
+     
         opaque_token = self.security.generate_opaque_refresh_token()
         access_token = self.security.generate_access_token(token_data=TokenSchemas(
-            exp=exp_time, 
+            exp=timedelta(minutes=40), 
             id=res.id,
             useremail=res.email,
             role=res.role,
@@ -149,6 +152,25 @@ class AuthService:
             # case OtpTokenType.PASSWORD_RESET:
             #     # handle reset logic
             #     pass
+            
+    
+    async def get_refresh_token(self, token: str, token_type: TokenType):
+        user = await self.repo.check_session_exist(token)
+        if user is None:
+            raise NoSessionException("No User session active, Login again...")
+      
+        access_token = self.security.generate_access_token(token_data=TokenSchemas(
+            exp=timedelta(minutes=40), 
+            id=user.id,
+            useremail=user.email,
+            role=user.role,
+            token_type=token_type,
+        ))
+        return CustomResponseSchemas.success_response(
+            data={
+                "access_token": access_token
+            }
+        )
             
             
 

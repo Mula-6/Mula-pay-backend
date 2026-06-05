@@ -1,4 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks
+
+from app.features.auth.schemas import RequestAccessToken
 from ..schemas import LoginSchemas, RegistrationSchema, OtpRequestSchemas
 from ..services import AuthService
 from app.shared.schemas import CustomResponseSchemas
@@ -66,4 +68,12 @@ async def request_otp(
     background_task: BackgroundTasks
 ):
     return await auth_service.request_otp_token(schemas.email, background_task=background_task, type=schemas.type)
-    
+
+
+
+@auth_controller.post("/refresh-token")
+async def refresh_token(
+    schemas: RequestAccessToken,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    return await auth_service.get_refresh_token(token=schemas.token, token_type=schemas.token_type)

@@ -12,3 +12,7 @@ class TokenSchemas(BaseModel):
     token_type: Optional[TokenType] = TokenType.ACCESS
     
     
+    
+class RequestAccessToken(BaseModel):
+    token: str
+    token_type: Optional[TokenType] = TokenType.ACCESS

@@ -91,20 +91,16 @@ class AuthRepo:
         res = await self.redis.get(get_session_key(token))
         if res is None:
             return None
-        clean_dt = UserBaseSchema.model_validate(json.load(res))
+        clean_dt = UserBaseSchema.model_validate(json.loads(res))
         return clean_dt
     
         
-    async def create_user_session(self, email: str, user_repo:UserRepo, token: str, exp: timedelta):
-        
-        if await self.check_session_exist(token) is None:
-            return False
-        
+    async def create_user_session(self, email: str, user_repo:UserRepo, token: str, exp: timedelta):        
         res = await user_repo.check_user_exist_in_db(email)
         if res is None:
             return False
         user = UserBaseSchema(email=res.email, firstname=res.firstname, lastname=res.lastname, role=res.role, id=str(res.id))
-        await self.redis.set(key=token, value=json.dumps(user.model_dump(), cls=CustomDataEncoder), exp=exp)
+        await self.redis.set(key=get_session_key(token), value=json.dumps(user.model_dump(), cls=CustomDataEncoder), exp=exp)
         return token
         
         
