@@ -18,4 +18,3 @@ async def get_db():
 db_injection = Annotated[AsyncSession, Depends(get_db)]
 redis_injection = Annotated[Redis, Depends(get_redis)]
 
-

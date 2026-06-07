@@ -1,26 +1,32 @@
 from typing import Optional
-
 import jwt
+from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidSignatureError, InvalidTokenError
 from app.core.config import settings
 from passlib.context import CryptContext
-from ..schemas import TokenSchemas
+from ...features.auth.schemas import TokenSchemas
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 from app.shared.constants import OtpTokenType
+from uuid import UUID
 import secrets
-from ..schemas import OtpTokenSchemas
+from ...features.auth.schemas import OtpTokenSchemas
+from fastapi import Depends
+from app.core.logger import get_logger
+from app.shared.exceptions import (
+    DecodingTokenException, AccessTokenExpriedException, 
+    InvalidTokenException, NoBearerTokenPassedException
+)
 
 
+logger = get_logger(__name__)
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 class SecurityService:
-    
-    @staticmethod
-    def get_auth_scheme():
-        return OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
-    
-    
+        
     def __init__(self):
         self._sk = settings.SK
         self._algo = settings.ALGO
@@ -56,3 +62,30 @@ class SecurityService:
     
     def generate_opaque_refresh_token(self):
         return secrets.token_urlsafe(64)
+    
+    
+    async def verify_access_token(self, token: str = Depends(oauth2_scheme)):
+        try:
+            if token is None:
+                raise NoBearerTokenPassedException()
+            payload = jwt.decode(token, self._sk, algorithms=[self._algo])
+            
+            return TokenSchemas(
+                id=UUID(payload.get("id")),
+                role=payload.get("role"),
+                useremail=payload.get("email"),
+                token_type=payload.get("token_type")
+            )
+        
+        except ExpiredSignatureError as e:
+            logger.error(f"error in token due to -> {e}")
+            raise AccessTokenExpriedException()
+        except DecodeError as e:
+            logger.error(f"error in token due to -> {e}")
+            raise DecodingTokenException()
+        except InvalidSignatureError as e:
+            logger.error(f"error in token due to -> {e}")
+            raise InvalidTokenException()
+        
+
+security_service = SecurityService()

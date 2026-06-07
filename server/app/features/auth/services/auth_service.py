@@ -16,7 +16,7 @@ from app.shared.exceptions import (UserAlreadyExistsException, EmailVerification
                                    InvalidCredentialsException,InvalidPayloadException )
 from app.shared.services import RedisService, Redis
 from app.features.user.repository import UserRepo
-from .security_service import SecurityService
+from ....shared.services import SecurityService
 from app.shared.schemas import CustomResponseSchemas
 from app.shared.services import EmailService
 from fastapi import BackgroundTasks

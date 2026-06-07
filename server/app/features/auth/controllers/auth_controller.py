@@ -10,7 +10,6 @@ from app.shared.di import db_injection
 from ..schemas import OtpResponseSchemas
 from app.shared.di import redis_injection
 from fastapi.security import OAuth2PasswordRequestForm
-from ..services import SecurityService
 
 
 

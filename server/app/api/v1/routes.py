@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from app.features.auth import auth_controller
+from app.features.user import user_controller
 
 v1 = APIRouter(
     prefix="/api/v1",
@@ -16,3 +17,4 @@ v1 = APIRouter(
 
 
 v1.include_router(auth_controller)
+v1.include_router(user_controller)
