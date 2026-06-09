@@ -2,7 +2,7 @@ from enum import Enum
 from datetime import datetime
 import json
 
-from sqlalchemy import UUID
+from uuid import UUID
 
 class CustomDataEncoder(json.JSONEncoder):
     def default(self, obj):

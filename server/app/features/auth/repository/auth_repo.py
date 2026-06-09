@@ -99,7 +99,8 @@ class AuthRepo:
         res = await user_repo.check_user_exist_in_db(email)
         if res is None:
             return False
-        user = UserBaseSchema(email=res.email, firstname=res.firstname, lastname=res.lastname, role=res.role, id=str(res.id))
+        user = UserBaseSchema(email=res.email, firstname=res.firstname, lastname=res.lastname, role=res.role, id=res.id, 
+                              is_email_verified=res.is_email_verified, is_enabled=res.is_email_verified, kyc_verification_status=res.kyc_verification_status)
         await self.redis.set(key=get_session_key(token), value=json.dumps(user.model_dump(), cls=CustomDataEncoder), exp=exp)
         return token
         

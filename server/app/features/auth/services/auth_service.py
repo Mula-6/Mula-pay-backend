@@ -8,6 +8,7 @@ from app.features.auth.schemas import TokenSchemas
 from app.shared.constants import TokenType
 from app.features.user.schemas import UserBaseSchema
 from app.shared.exceptions import NoSessionException
+from app.features.auth.schemas import LogoutSchemas
 from ..schemas import LoginSchemas
 from ..schemas import RegistrationSchema, StageRegistration
 from ..repository import AuthRepo
@@ -20,7 +21,7 @@ from ....shared.services import SecurityService
 from app.shared.schemas import CustomResponseSchemas
 from app.shared.services import EmailService
 from fastapi import BackgroundTasks
-from app.shared.constants.keys import get_token_key
+from app.shared.constants.keys import get_token_key, get_session_key
 
 
 
@@ -172,7 +173,9 @@ class AuthService:
             }
         )
             
-            
+    async def logout(self, schemas: LogoutSchemas):
+        res = await self.redis.delete(get_session_key(schemas.token))
+        return CustomResponseSchemas.success_response(data=res, message="You have logged out successfully")
 
 
 

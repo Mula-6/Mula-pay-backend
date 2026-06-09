@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks
 
 from app.features.auth.schemas import RequestAccessToken
-from ..schemas import LoginSchemas, RegistrationSchema, OtpRequestSchemas
+from ..schemas import LoginSchemas, RegistrationSchema, OtpRequestSchemas, LogoutSchemas
 from ..services import AuthService
 from app.shared.schemas import CustomResponseSchemas
 from fastapi import Depends
@@ -76,3 +76,11 @@ async def refresh_token(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     return await auth_service.get_refresh_token(token=schemas.token, token_type=schemas.token_type)
+
+
+@auth_controller.delete("/logout")
+async def logout(
+    schemas: LogoutSchemas,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    return await auth_service.logout(schemas)
