@@ -1,4 +1,6 @@
-from sqlalchemy.orm import mapped_column, Mapped
+from typing import List, Optional
+
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import UUID, String, Boolean, Enum, DateTime, func
 import uuid
 from app.infra.database import Base
@@ -21,3 +23,11 @@ class Users(Base):
     role: Mapped[Roles] = mapped_column(Enum(Roles, name="role"))
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.current_timestamp())
     updated_at: Mapped[DateTime] = mapped_column(DateTime,  server_default=func.current_timestamp())
+    
+    devices: Mapped[List["Device"]] = relationship(
+            "Device",
+            back_populates="user",
+            cascade="all, delete-orphan",
+            lazy="select",
+            doc="List of devices associated with this user"
+        )
