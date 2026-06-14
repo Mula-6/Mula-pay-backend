@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from app.features.auth import auth_controller
-from app.features.user import user_controller
+from app.features.auth.controllers.auth_controller import auth_controller
+from app.features.user.controller.user_controller import user_controller
 
 v1 = APIRouter(
     prefix="/api/v1",
