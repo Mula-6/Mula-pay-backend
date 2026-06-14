@@ -1,9 +1,12 @@
+from typing import Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.features.auth.schemas import RegistrationSchema
 from app.shared.constants import Roles, KycVerificationState
 from ..model import Users
 from uuid import uuid4
+import datetime
 
 from app.core.logger import get_logger
 
@@ -44,3 +47,12 @@ class UserRepo:
             return True
         except Exception as e:
             logger.error(f"error occured while creating user due to -> {e}")
+            
+
+        
+    async def update_user_password(self, email: str, password: Optional[str] = None):
+        res = await self.check_user_exist_in_db(email)
+        res.password = password if password is not None else res.password
+        res.updated_at = datetime.datetime.utcnow() if password else res.updated_at
+        return res.firstname;        
+        

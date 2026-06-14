@@ -6,3 +6,4 @@ from .user_not_found_exception import UserNotFoundException
 from .invalid_payload_exception import InvalidPayloadException
 from .no_session_exception import NoSessionException
 from .token_exceptions import DecodingTokenException, AccessTokenExpriedException, InvalidTokenException, NoBearerTokenPassedException
+from .password_exceptions import PasswordMissingException, PasswordResetTokenNotFoundException, TokenVerificationFailedException, InvalidPasswordResetSessionException, PasswordResetSessionAlreadyExistsException

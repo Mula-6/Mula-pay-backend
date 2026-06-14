@@ -1,5 +1,7 @@
 from datetime import timedelta
 import json
+from typing import Optional
+import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,12 +11,16 @@ from app.shared.constants import TokenType
 from app.features.user.schemas import UserBaseSchema
 from app.shared.exceptions import NoSessionException
 from app.features.auth.schemas import LogoutSchemas
+from app.features.auth.schemas import ResetPasswordShemas
+from app.shared.constants.roles import Roles
 from ..schemas import LoginSchemas
 from ..schemas import RegistrationSchema, StageRegistration
 from ..repository import AuthRepo
 from app.shared.exceptions import (UserAlreadyExistsException, EmailVerificationPendingException, OtpAlreadySentException, 
                                    OtpNotFoundException, InvalidOtpException, UserNotFoundException, 
-                                   InvalidCredentialsException,InvalidPayloadException )
+                                   InvalidCredentialsException,PasswordResetSessionAlreadyExistsException, PasswordResetTokenNotFoundException,
+                                   TokenVerificationFailedException, InvalidPasswordResetSessionException, PasswordMissingException
+                                   )
 from app.shared.services import RedisService, Redis
 from app.features.user.repository import UserRepo
 from ....shared.services import SecurityService
@@ -71,6 +77,7 @@ class AuthService:
         user = await self.repo.check_user_exist_in_stage(email)
         if user is not None:
             await self.repo.delete_stage_registration(user.reg_dt.email)
+            await self.repo.delete_tep_otp(email, OtpTokenType.VERIFICATION)
             await self.user_repo.create_user(user.reg_dt)
             return CustomResponseSchemas.success_response(data=None, message="Your email have been verified")
             
@@ -114,7 +121,7 @@ class AuthService:
             raise OtpAlreadySentException(email)
 
         otp_key = get_token_key(email, type)
-        otp = self.security.generate_otp()
+        otp = self.security.generate_otp(otp_type=type)
 
         background_task.add_task(
             self.email_service.send_email_otp,
@@ -133,28 +140,91 @@ class AuthService:
             message=f"Otp was sent to {email}"
         )
     
-    async def verify_otp_code(self, otp: str, email: str, type: OtpTokenType):
+    async def verify_otp_code(self, otp: str, email: str, type: str):
+    
         res = await self.repo.get_temp_otp(email, type)
 
         if res is None:
             raise OtpNotFoundException()
-
-        if res.otp != otp:
+        
+        if otp != res.otp:
             raise InvalidOtpException()
-
-        match type:
+    
+        
+        match res.otp_type:
             case OtpTokenType.VERIFICATION:
-               return await self.user_email_verified(email)
+                                
+                return await self.user_email_verified(email)
 
             # case OtpTokenType.TRANSFER:
             #     # handle transfer logic
             #     pass
-
-            # case OtpTokenType.PASSWORD_RESET:
-            #     # handle reset logic
-            #     pass
             
+            case OtpTokenType.FORGET_PASSWORD:
+                check = await self.repo.get_rest_password_session_token(email)
+                if check:
+                    raise PasswordResetSessionAlreadyExistsException()
+                return await self.generate_rest_password_session(email)
+                
+            
+        
+    async def generate_rest_password_session(self, email: str):
+        resest_token = self.security.generate_access_token(token_data=TokenSchemas(
+            exp=timedelta(minutes=4), 
+            id=uuid.uuid4(),
+            useremail=email,
+            role=Roles.USER,
+            token_type=TokenType.RESET_PASSWORD,
+        ))
+        await self.repo.create_rest_password_session(email, resest_token)
+        return CustomResponseSchemas.success_response(data=None, message="Your password reset session have been created")
     
+
+    async def verifiy_password_reset_session(self, email: str):
+        res = await self.repo.get_rest_password_session_token(email)
+        if res is None:
+            raise PasswordResetTokenNotFoundException()
+
+        output = await self.security.verify_access_token(res)
+        if output.useremail == email and output.token_type == TokenType.RESET_PASSWORD:
+            return True
+
+        raise TokenVerificationFailedException()
+
+
+    async def handle_reset_password(self, payload: ResetPasswordShemas, background_task: BackgroundTasks):
+        if payload.password is None:
+            raise PasswordMissingException()
+
+        verify = await self.verifiy_password_reset_session(payload.email)
+
+        if not verify:
+            raise InvalidPasswordResetSessionException()
+        
+
+        res = await self.user_repo.update_user_password(
+            password=self.security.generate_hash_password(payload.password), 
+            email=payload.email
+        )
+
+        if not res:
+            raise UserNotFoundException()
+
+        if res:
+            background_task.add_task(
+                self.email_service.send_password_updated_notification, 
+                email=payload.email, 
+                firstname=res
+            )
+
+        return CustomResponseSchemas.success_response(
+            data=None, 
+            message="Your password has been updated successfully"
+        )  
+        
+        
+        
+        
     async def get_refresh_token(self, token: str, token_type: TokenType):
         user = await self.repo.check_session_exist(token)
         if user is None:

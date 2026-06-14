@@ -11,3 +11,6 @@ def get_token_key(email: str, type: OtpTokenType):
 
 def get_session_key(token: str):
     return f"SESSION:{token}"
+
+def get_rest_password_key(email: str):
+    return f"REST-PASSWORD-SESSION:{email}"

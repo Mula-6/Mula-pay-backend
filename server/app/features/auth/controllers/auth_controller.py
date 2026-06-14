@@ -1,6 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks
 
 from app.features.auth.schemas import RequestAccessToken
+from app.features.auth.schemas import ResetPasswordShemas
 from ..schemas import LoginSchemas, RegistrationSchema, OtpRequestSchemas, LogoutSchemas
 from ..services import AuthService
 from app.shared.schemas import CustomResponseSchemas
@@ -52,7 +53,7 @@ async def register(
     return result
 
 
-@auth_controller.post("/verify-otp")
+@auth_controller.post("/otp-verify")
 async def verifiy_otp(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
     schemas: OtpResponseSchemas  
@@ -84,3 +85,11 @@ async def logout(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     return await auth_service.logout(schemas)
+
+@auth_controller.put("/reset-password")
+async def rest_password(
+    schemas: ResetPasswordShemas,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    task: BackgroundTasks
+):
+    return await auth_service.handle_reset_password(payload=schemas, background_task=task)

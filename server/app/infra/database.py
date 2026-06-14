@@ -4,6 +4,8 @@ from typing import AsyncIterable
 from app.core import get_logger
 from sqlalchemy.orm import declarative_base
 import contextlib
+import ssl
+
 
 
 
@@ -13,10 +15,21 @@ logger  = get_logger(__name__)
 
 
 DATABASE_URL = settings.DATABASE_URL
+# ssl_context = ssl.create_default_context()
 
 class DbSessionManager:
     def __init__(self, host: str):
-        self.__engine = create_async_engine(url=host)
+        self.__engine = create_async_engine(
+            url=host, 
+            pool_size=20,
+        max_overflow=10,
+        pool_pre_ping=True,  
+        pool_recycle=3600,   
+        echo=False,
+    #         connect_args={
+    #     "ssl": ssl_context
+    # }
+            )
         self.__session_maker = async_sessionmaker(
             class_= AsyncSession,
             expire_on_commit=False, 

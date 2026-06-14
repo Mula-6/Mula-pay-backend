@@ -5,7 +5,7 @@ from app.shared.services import RedisService
 from app.shared.constants import OtpTokenType
 from ..schemas import StageRegistration
 import json
-from app.shared.constants.keys import get_stage_reg_key, get_token_key, get_session_key
+from app.shared.constants.keys import get_stage_reg_key, get_token_key, get_session_key, get_rest_password_key
 from app.core.logger import get_logger
 from app.shared.constants import RegStagedState
 from ..schemas import OtpTokenSchemas
@@ -25,7 +25,16 @@ class AuthRepo:
         
     
     
-
+    
+    async def create_rest_password_session(self, email: str, token: str):
+        await self.redis.set(
+            key=get_rest_password_key(email), value=token, exp=timedelta(minutes=3)
+        )
+        return True
+    
+    async def get_rest_password_session_token(self, email: str):
+        res = await self.redis.get(get_rest_password_key(email))
+        return res
     
     async def check_user_exist_in_stage(self, email:str):
         try:
@@ -82,10 +91,17 @@ class AuthRepo:
     async def get_temp_otp(self, email: str, type: OtpTokenType):
         key = get_token_key(email, type)
         res = await self.redis.get(key)
+    
+            
         if res is not None:
             clean_dt = OtpTokenSchemas.model_validate(json.loads(res))
             return clean_dt
         return None
+    
+    async def delete_tep_otp(self, email: str, type: OtpTokenType):
+        key = get_token_key(email=email, type=type);
+        await self.redis.delete(key)
+        return True;
     
     async def check_session_exist(self, token: str):
         res = await self.redis.get(get_session_key(token))
