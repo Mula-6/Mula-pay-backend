@@ -14,3 +14,7 @@ def get_session_key(token: str):
 
 def get_rest_password_key(email: str):
     return f"REST-PASSWORD-SESSION:{email}"
+
+
+def current_active_device_key(user_id:str):
+    return f"ACTIVE_DEVICE_SESSION:{user_id}"

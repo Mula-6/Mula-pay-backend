@@ -1,9 +1,0 @@
-export 'sign_up_model.dart';
-export 'email_reg_otp.dart';
-export 'sign_in_model_res.dart';
-export 'access_token_model.dart';
-export 'current_user_model.dart';
-export 'request_otp_model.dart';
-export 'forget_password_model.dart';
-export "./wallet_model.dart";
-export './opaque_oken_model.dart';

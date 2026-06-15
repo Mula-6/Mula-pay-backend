@@ -59,7 +59,9 @@ class AuthService:
             role=res.role,
             token_type=TokenType.ACCESS,
         ))
+        from app.features.device.service import DeviceService
         
+        await DeviceService(self.session, redis=self.redis).cache_device_helper(res.id)
         await self.repo.create_user_session(email=res.email, user_repo=self.user_repo, token= opaque_token,exp=timedelta(days=7))
         return CustomResponseSchemas.success_response(
             data={

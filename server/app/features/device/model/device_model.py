@@ -48,26 +48,19 @@ class Device(Base):
     )
     
     
-    latitude: Mapped[Optional[float]] = mapped_column(
-        Float, 
-        nullable=True,
-        
-    )
-    
-    longitude: Mapped[Optional[float]] = mapped_column(
-        Float, 
-        nullable=True,
-       
-    )
-    
     fcm_token: Mapped[Optional[str]] = mapped_column(
         String(500), 
         nullable=True,
        
     )
     
-
     is_active: Mapped[bool] = mapped_column(
+        Boolean, 
+        default=True,
+        nullable=False,
+    )
+    
+    is_discoverable: Mapped[bool] = mapped_column(
         Boolean, 
         default=True,
         nullable=False,
@@ -81,6 +74,12 @@ class Device(Base):
     logged_out_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, 
         nullable=True,
+    )
+    
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        server_default=func.current_timestamp(),
+        nullable=False,
     )
     
     created_at: Mapped[datetime] = mapped_column(
@@ -110,7 +109,19 @@ class Device(Base):
         back_populates="devices",
         foreign_keys=[user_id]
     )
-    
-    def __repr__(self) -> str:
-        return f"<Device(id={self.id}, device_name={self.device_name}, platform={self.platform})>"
-    
+# id
+# user_id
+# device_identifier
+# fcm_token
+# device_platform
+# manufacturer
+# device_name
+# os_version
+# app_version
+# is_active
+# is_discoverable
+# last_seen_at
+# login_at
+# logout_at
+# created_at
+# updated_at
